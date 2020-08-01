@@ -1,11 +1,22 @@
+const isArray = (val) => Object.prototype.toString.apply(val) === "[object Array]";
+const isObject = (val) => Object.prototype.toString.apply(val) === "[object Object]";
+
 class ElementWrapper {
   constructor(type) {
     this.root = document.createElement(type);
   }
   setAttribute(name, value) {
+    if (name.match(/^on([\s\S]+)$/)) {
+      // 有些事件名称中是有大写字母的，所以不能直接调用RegExp.$1.toLowerCase
+      let eventName = RegExp.$1.replace(/^[\s\S]/, s => s.toLowerCase());
+      this.root.addEventListener(eventName, value);
+    }
+    if (name === 'className') {
+      name = 'class';
+    }
     this.root.setAttribute(name, value);
   }
-  appendChild(vchild){
+  appendChild(vchild) {
     vchild.mountTo(this.root);
   }
 
@@ -27,7 +38,6 @@ class TextWrapper {
 
 export let ToyReact = {
   createElement(type, attributes, ...children) {
-    console.log(arguments);
     let element;
     if (typeof type === 'string')
       element = new ElementWrapper(type);
@@ -39,15 +49,15 @@ export let ToyReact = {
     let insertChildren = (children) => {
       for (let child of children) {
 
-        if(Object.prototype.toString.apply(child) === "[object Array]") {
+        if (isArray(child)) {
           insertChildren(child);
         } else {
           if (!(child instanceof Component) &&
-              !(child instanceof ElementWrapper) &&
-              !(child instanceof TextWrapper)) {
+            !(child instanceof ElementWrapper) &&
+            !(child instanceof TextWrapper)) {
             child = String(child);
           }
-          if(typeof child === 'string') {
+          if (typeof child === 'string') {
             child = new TextWrapper(child);
           }
           element.appendChild(child);
@@ -69,9 +79,11 @@ export let ToyReact = {
 export class Component {
   constructor() {
     this.children = [];
+    this.props = Object.create(null);
   }
 
   setAttribute(name, value) {
+    this.props = value;
     this[name] = value;
   }
 
@@ -82,5 +94,26 @@ export class Component {
 
   appendChild(vchild) {
     this.children.push(vchild);
+  }
+
+  setState(state) {
+    let merge = (oldState, newState) => {
+      for (let p in newState) {
+        if (isArray(newState[p]) && !isArray(oldState[p])) {
+          oldState[p] = [];
+          merge(oldState[p], newState[p]);
+        }
+        if (isObject(newState[p]) && !isObject(oldState[p])) {
+          oldState[p] = {};
+          merge(oldState[p], newState[p]);
+        }
+        oldState[p] = newState[p];
+      }
+    }
+    if (!this.state && state) {
+      this.state = {};
+    }
+    merge(this.state, state);
+    console.log('state', this.state);
   }
 }
