@@ -6,7 +6,10 @@ class MyComponent extends Component{
       <div name="a" id="ida">
         <span>hello</span>
         <span>world</span>
-        <div>{this.children}</div>
+        <div>
+          {true}
+          {this.children}
+        </div>
       </div>
     )
   }

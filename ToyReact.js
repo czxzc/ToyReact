@@ -30,7 +30,7 @@ export let ToyReact = {
     console.log(arguments);
     let element;
     if (typeof type === 'string')
-      element = new ElementWrapper();
+      element = new ElementWrapper(type);
     else
       element = new type();
     for (let name in attributes) {
@@ -38,12 +38,18 @@ export let ToyReact = {
     }
     let insertChildren = (children) => {
       for (let child of children) {
-        if(typeof child === 'string') {
-          child =new TextWrapper(child);
-        }
+
         if(Object.prototype.toString.apply(child) === "[object Array]") {
           insertChildren(child);
         } else {
+          if (!(child instanceof Component) &&
+              !(child instanceof ElementWrapper) &&
+              !(child instanceof TextWrapper)) {
+            child = String(child);
+          }
+          if(typeof child === 'string') {
+            child = new TextWrapper(child);
+          }
           element.appendChild(child);
         }
       }
