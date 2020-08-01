@@ -1,6 +1,18 @@
 const isArray = (val) => Object.prototype.toString.apply(val) === "[object Array]";
 const isObject = (val) => Object.prototype.toString.apply(val) === "[object Object]";
 
+const createRange = (element) => {
+  let range = document.createRange();
+  if (element.children.length) {
+    range.setStartAfter(element.lastChild);
+    range.setEndAfter(element.lastChild);
+  } else {
+    range.setStart(element, 0);
+    range.setEnd(element, 0);
+  }
+  return range;
+}
+
 class ElementWrapper {
   constructor(type) {
     this.root = document.createElement(type);
@@ -17,11 +29,13 @@ class ElementWrapper {
     this.root.setAttribute(name, value);
   }
   appendChild(vchild) {
-    vchild.mountTo(this.root);
+    const range = createRange(this.root);
+    vchild.mountTo(range);
   }
 
-  mountTo(parent) {
-    parent.appendChild(this.root);
+  mountTo(range) {
+    range.deleteContents();
+    range.insertNode(this.root);
   }
 }
 
@@ -30,8 +44,9 @@ class TextWrapper {
     this.root = document.createTextNode(content);
   }
 
-  mountTo(parent) {
-    parent.appendChild(this.root);
+  mountTo(range) {
+    range.deleteContents();
+    range.insertNode(this.root);
   }
 }
 
@@ -72,7 +87,8 @@ export let ToyReact = {
 
   // 将vdom变成实dom
   render(vdom, element) {
-    vdom.mountTo(element);
+    let range = createRange(element);
+    vdom.mountTo(range);
   }
 }
 
@@ -83,13 +99,19 @@ export class Component {
   }
 
   setAttribute(name, value) {
-    this.props = value;
+    this.props[name] = value;
     this[name] = value;
   }
 
-  mountTo(parent) {
+  mountTo(range) {
+    this.range = range;
+    this.update();
+  }
+
+  update() {
+    this.range.deleteContents();
     let vdom = this.render();
-    vdom.mountTo(parent);
+    vdom.mountTo(this.range);
   }
 
   appendChild(vchild) {
@@ -114,6 +136,6 @@ export class Component {
       this.state = {};
     }
     merge(this.state, state);
-    console.log('state', this.state);
+    this.update();
   }
 }
