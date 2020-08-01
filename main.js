@@ -6,13 +6,16 @@ class MyComponent extends Component{
       <div name="a" id="ida">
         <span>hello</span>
         <span>world</span>
+        <div>{this.children}</div>
       </div>
     )
   }
 }
 
 let a= (
-  <MyComponent name="a" id="ida"></MyComponent>
+  <MyComponent name="a" id="ida">
+    <div>hi</div>
+  </MyComponent>
 )
 
 console.log(a);

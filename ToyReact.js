@@ -36,12 +36,21 @@ export let ToyReact = {
     for (let name in attributes) {
       element.setAttribute(name, attributes[name]);
     }
-    for (let child of children) {
-      if(typeof child === 'string') {
-        child =new TextWrapper(child);
+    let insertChildren = (children) => {
+      for (let child of children) {
+        if(typeof child === 'string') {
+          child =new TextWrapper(child);
+        }
+        if(Object.prototype.toString.apply(child) === "[object Array]") {
+          insertChildren(child);
+        } else {
+          element.appendChild(child);
+        }
       }
-      element.appendChild(child);
     }
+
+    insertChildren(children);
+
     return element;
   },
 
@@ -52,6 +61,10 @@ export let ToyReact = {
 }
 
 export class Component {
+  constructor() {
+    this.children = [];
+  }
+
   setAttribute(name, value) {
     this[name] = value;
   }
@@ -59,5 +72,9 @@ export class Component {
   mountTo(parent) {
     let vdom = this.render();
     vdom.mountTo(parent);
+  }
+
+  appendChild(vchild) {
+    this.children.push(vchild);
   }
 }
